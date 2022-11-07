@@ -36,16 +36,13 @@ ul {
   list-style: none;
   padding: 0;
 }
-li {
-
-}
 
 .check {
   display: flex;
-  align-items: center;
   margin-bottom: 0.5rem;
 }
 .check svg {
+  margin-top: 1px;
   margin-right: 0.5rem;
 }
 .service {
@@ -66,4 +63,10 @@ li {
 
 .service-name {
   margin-right: 2rem;
+}
+.instructions {
+  background: #f5f7f9;
+  border-left: 2px solid rgb(52, 109, 219);
+  padding: 1rem;
+  margin-top: 4px;
 }

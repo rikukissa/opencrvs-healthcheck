@@ -65,10 +65,12 @@ function Check<T = any>({
   check,
   ok,
   fail,
+  instructions,
 }: {
   check: () => Promise<T>;
   ok: (result: T) => React.ReactNode;
   fail: (result: Error) => React.ReactNode;
+  instructions?: React.ReactNode;
 }) {
   const [status, setStatus] = useState<Status>("LOADING");
   const [result, setResult] = useState<T | null>(null);
@@ -87,7 +89,21 @@ function Check<T = any>({
   if (status === "LOADING") {
     return <Spinner id="spin" />;
   }
-  return <div>{status === "OK" ? ok(result as T) : fail(result as Error)}</div>;
+  return (
+    <div className="check">
+      {status === "OK" ? (
+        <Icon name="CheckCircle" color="green" />
+      ) : (
+        <Icon name="AlertCircle" color="red" />
+      )}
+      <div>
+        {status === "OK" ? ok(result as T) : fail(result as Error)}
+        {status === "FAIL" && instructions && (
+          <div className="instructions">{instructions}</div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 async function getHearthLocations() {
@@ -228,49 +244,52 @@ function App() {
                   check={() => loginPromise}
                   ok={(conf) => {
                     return (
-                      <div className="check">
-                        <StatusGreen />
-                        <span>
-                          Login OK as <strong>kennedy.mweene</strong>
-                        </span>
-                      </div>
+                      <span>
+                        Login OK as <strong>kennedy.mweene</strong>
+                      </span>
                     );
                   }}
                   fail={() => (
-                    <div className="check">
-                      Failed to login with kennedy.mweene. Try running `yarn
-                      db:backup:restore` in your country config repository.
-                    </div>
+                    <span>
+                      Failed to login as <strong>kennedy.mweene</strong>
+                    </span>
                   )}
+                  instructions={
+                    <span>
+                      Try running `yarn db:backup:restore` in your country
+                      config repository. This command loads a previous backup of
+                      the database.
+                    </span>
+                  }
                 />
                 <Check<{ COUNTRY: string }>
                   check={getCountryConfig}
                   ok={(conf) => {
-                    return (
-                      <div className="check">
-                        <StatusGreen />
-                        Country config {conf.COUNTRY}
-                      </div>
-                    );
+                    return <span>Country config {conf.COUNTRY}</span>;
                   }}
-                  fail={() => <p>Country config not running</p>}
+                  fail={() => <span>Country config not running</span>}
+                  instructions={
+                    <span>
+                      Go to your country config repository (opencrvs-farajaland
+                      or opencrvs-your-country) and run{" "}
+                      <strong>yarn dev</strong>.
+                    </span>
+                  }
                 />
                 <Check
                   check={getHearthLocations}
                   ok={(conf) => {
-                    return (
-                      <div className="check">
-                        <StatusGreen />
-                        OpenHIM channels set up
-                      </div>
-                    );
+                    return <span>OpenHIM channels set up</span>;
                   }}
                   fail={() => (
-                    <div className="check">
-                      Your OpenHIM doesn't have any channels. Try running `yarn
-                      db:backup:restore` in your country config repository.
-                    </div>
+                    <span>Your OpenHIM doesn't have any channels.</span>
                   )}
+                  instructions={
+                    <span>
+                      Try running <strong>yarn db:backup:restore</strong> in
+                      your country config repository.
+                    </span>
+                  }
                 />
                 <Check
                   check={async () => {
@@ -281,23 +300,17 @@ function App() {
                     }
                   }}
                   ok={(conf) => {
-                    return (
-                      <div className="check">
-                        <StatusGreen />
-                        There are locations in Hearth
-                      </div>
-                    );
+                    return <span>There are locations in Hearth</span>;
                   }}
                   fail={() => (
-                    <div className="check">
-                      <Icon name="AlertCircle" color="red" />
-                      <div>
-                        No locations in Hearth's Locations collection. Try
-                        running `yarn db:backup:restore` in your country config
-                        repository.
-                      </div>
-                    </div>
+                    <span>No locations in Hearth's Locations collection.</span>
                   )}
+                  instructions={
+                    <span>
+                      Try running <strong>yarn db:backup:restore</strong> in
+                      your country config repository.
+                    </span>
+                  }
                 />
               </Content>
             </Frame.Section>
