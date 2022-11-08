@@ -48,6 +48,9 @@ async function login() {
     credentials: "omit",
   }).then((res) => res.json());
 
+  if (data.statusCode === 401) {
+    throw new Error(data.error);
+  }
   return fetch("http://localhost:4040/verifyCode", {
     body: `{"code":"000000","nonce":"${data.nonce}"}`,
     method: "POST",
@@ -87,14 +90,14 @@ function Check<T = any>({
   }, []);
 
   if (status === "LOADING") {
-    return <Spinner id="spin" />;
+    return <Spinner size={20} id="spin" />;
   }
   return (
     <div className="check">
       {status === "OK" ? (
         <Icon name="CheckCircle" color="green" />
       ) : (
-        <Icon name="AlertCircle" color="red" />
+        <Icon name="AlertTriangle" color="red" />
       )}
       <div>
         {status === "OK" ? ok(result as T) : fail(result as Error)}
@@ -116,6 +119,22 @@ async function getHearthLocations() {
 }
 
 function App() {
+  const [state, setState] = useState({
+    someDevServerRunning: false,
+    loggedIn: false,
+  });
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = "http://localhost:3000/assets/sample-signature.png";
+    img.onload = () => {
+      setState((s) => ({ ...s, someDevServerRunning: true }));
+    };
+    loginPromise.then(() => {
+      setState((s) => ({ ...s, loggedIn: true }));
+    });
+  }, []);
+
   const [services, setServices] = useState<{
     [name: string]: Service;
   }>({
@@ -200,6 +219,13 @@ function App() {
     },
   });
 
+  const composedState = {
+    developmentEnvironment:
+      services["client"].status === "FAIL" && state.someDevServerRunning
+        ? "cra"
+        : "vite",
+  };
+
   useEffect(() => {
     function setHealthy(service: Service) {
       setServices((services) => ({
@@ -240,6 +266,15 @@ function App() {
           <Frame.Layout>
             <Frame.Section>
               <Content title="Checks">
+                <div className="check">
+                  <Icon name="AlertCircle" color="blue" />
+                  Development environment is running&nbsp;
+                  <strong>
+                    {composedState.developmentEnvironment === "cra"
+                      ? "Create React App"
+                      : "Vite"}
+                  </strong>
+                </div>
                 <Check<{ token: string }>
                   check={() => loginPromise}
                   ok={(conf) => {
@@ -262,10 +297,59 @@ function App() {
                     </span>
                   }
                 />
+                {state.loggedIn && (
+                  <>
+                    <Check
+                      check={getHearthLocations}
+                      ok={(conf) => {
+                        return <span>OpenHIM channels set up</span>;
+                      }}
+                      fail={() => (
+                        <span>Your OpenHIM doesn't have any channels.</span>
+                      )}
+                      instructions={
+                        <span>
+                          Try running <strong>yarn db:backup:restore</strong> in
+                          your country config repository.
+                        </span>
+                      }
+                    />
+                    <Check
+                      check={async () => {
+                        const data = await getHearthLocations();
+
+                        if (!data.total || data.total === 0) {
+                          throw new Error("No locations found");
+                        }
+                      }}
+                      ok={(conf) => {
+                        return <span>There are locations in Hearth</span>;
+                      }}
+                      fail={() => (
+                        <span>
+                          No locations in Hearth's Locations collection.
+                        </span>
+                      )}
+                      instructions={
+                        <span>
+                          Try running <strong>yarn db:backup:restore</strong> in
+                          your country config repository.
+                        </span>
+                      }
+                    />
+                  </>
+                )}
+              </Content>
+              <Content title="Country config">
                 <Check<{ COUNTRY: string }>
                   check={getCountryConfig}
                   ok={(conf) => {
-                    return <span>Country config {conf.COUNTRY}</span>;
+                    return (
+                      <span>
+                        Country config configured with code{" "}
+                        <strong>{conf.COUNTRY}</strong>
+                      </span>
+                    );
                   }}
                   fail={() => <span>Country config not running</span>}
                   instructions={
@@ -273,42 +357,6 @@ function App() {
                       Go to your country config repository (opencrvs-farajaland
                       or opencrvs-your-country) and run{" "}
                       <strong>yarn dev</strong>.
-                    </span>
-                  }
-                />
-                <Check
-                  check={getHearthLocations}
-                  ok={(conf) => {
-                    return <span>OpenHIM channels set up</span>;
-                  }}
-                  fail={() => (
-                    <span>Your OpenHIM doesn't have any channels.</span>
-                  )}
-                  instructions={
-                    <span>
-                      Try running <strong>yarn db:backup:restore</strong> in
-                      your country config repository.
-                    </span>
-                  }
-                />
-                <Check
-                  check={async () => {
-                    const data = await getHearthLocations();
-
-                    if (!data.total || data.total === 0) {
-                      throw new Error("No locations found");
-                    }
-                  }}
-                  ok={(conf) => {
-                    return <span>There are locations in Hearth</span>;
-                  }}
-                  fail={() => (
-                    <span>No locations in Hearth's Locations collection.</span>
-                  )}
-                  instructions={
-                    <span>
-                      Try running <strong>yarn db:backup:restore</strong> in
-                      your country config repository.
                     </span>
                   }
                 />
