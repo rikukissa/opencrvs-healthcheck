@@ -278,6 +278,59 @@ export function MyEnvironment() {
                 </span>
               }
             />
+            {state.loggedIn && (
+              <>
+                <Check
+                  check={async () => {
+                    const data = await getHearthLocations();
+
+                    if (!data.total || data.total === 0) {
+                      throw new Error("No locations found");
+                    }
+                  }}
+                  ok={(conf) => {
+                    return <span>There are locations in Hearth</span>;
+                  }}
+                  fail={() => (
+                    <span>No locations in Hearth's Locations collection.</span>
+                  )}
+                  instructions={
+                    <span>
+                      Try running <strong>yarn db:backup:restore</strong> in
+                      your country config repository.
+                    </span>
+                  }
+                />
+                <Check
+                  check={getHearthLocations}
+                  ok={(conf) => {
+                    return (
+                      <span>
+                        <a target="_blank" href="http://localhost:8888">
+                          OpenHIM
+                        </a>{" "}
+                        channels set up and functional
+                      </span>
+                    );
+                  }}
+                  fail={() => (
+                    <span>
+                      Your{" "}
+                      <a target="_blank" href="http://localhost:8888">
+                        OpenHIM
+                      </a>{" "}
+                      doesn't have any channels.
+                    </span>
+                  )}
+                  instructions={
+                    <span>
+                      Try running <strong>yarn db:backup:restore</strong> in
+                      your country config repository.
+                    </span>
+                  }
+                />
+              </>
+            )}
             <Check
               check={() =>
                 tryOpenHIMPassword("password")
@@ -300,52 +353,20 @@ export function MyEnvironment() {
               fail={() => <span>Cannot log in to OpenHIM.</span>}
               instructions={
                 <span>
-                  Make sure your OpenHIM username is{" "}
+                  <strong>Note</strong>, this is non-critical and your
+                  environment might still work fine.
+                  <br />
+                  Make sure you have allowed your browser use OpenHIM's
+                  self-signed certificate{" "}
+                  <a target="_blank" href="https://localhost:8080/heartbeat">
+                    here
+                  </a>
+                  .<br /> Then make sure your OpenHIM username is{" "}
                   <strong>root@openhim.org</strong> and password is{" "}
                   <strong>password</strong> or <strong>wXV8xSW2Ju5X3EPn</strong>
                 </span>
               }
             />
-            {state.loggedIn && (
-              <>
-                <Check
-                  check={getHearthLocations}
-                  ok={(conf) => {
-                    return <span>OpenHIM channels set up</span>;
-                  }}
-                  fail={() => (
-                    <span>Your OpenHIM doesn't have any channels.</span>
-                  )}
-                  instructions={
-                    <span>
-                      Try running <strong>yarn db:backup:restore</strong> in
-                      your country config repository.
-                    </span>
-                  }
-                />
-                <Check
-                  check={async () => {
-                    const data = await getHearthLocations();
-
-                    if (!data.total || data.total === 0) {
-                      throw new Error("No locations found");
-                    }
-                  }}
-                  ok={(conf) => {
-                    return <span>There are locations in Hearth</span>;
-                  }}
-                  fail={() => (
-                    <span>No locations in Hearth's Locations collection.</span>
-                  )}
-                  instructions={
-                    <span>
-                      Try running <strong>yarn db:backup:restore</strong> in
-                      your country config repository.
-                    </span>
-                  }
-                />
-              </>
-            )}
           </Content>
           <Content title="Country config">
             <Check<{ COUNTRY: string }>
