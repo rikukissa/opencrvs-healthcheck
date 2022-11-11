@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 import { login } from "./checks";
 import { Navigation } from "./Navigation";
+import { generateOpenHIMCredentials, getChannels } from "./openhim";
 
 type Status = "LOADING" | "OK" | "FAIL";
 type Service = {
@@ -19,6 +20,18 @@ type Service = {
   type?: "dependency" | "service";
   acceptedStatusCodes?: number[];
 };
+
+function loginToOpenHIM(username: string, password: string) {
+  return generateOpenHIMCredentials({
+    username,
+    password,
+    apiURL: "https://localhost:8080",
+  });
+}
+
+function tryOpenHIMPassword(password: string) {
+  return loginToOpenHIM("root@openhim.org", password).then(getChannels);
+}
 
 async function getCountryConfig(): Promise<{ COUNTRY: string }> {
   const res = await fetch(
@@ -262,6 +275,34 @@ export function MyEnvironment() {
                   Try running `yarn db:backup:restore` in your country config
                   repository. This command loads a previous backup of the
                   database.
+                </span>
+              }
+            />
+            <Check
+              check={() =>
+                tryOpenHIMPassword("password")
+                  .then(() => "password")
+                  .catch(() =>
+                    tryOpenHIMPassword("wXV8xSW2Ju5X3EPn").then(
+                      () => "wXV8xSW2Ju5X3EPn"
+                    )
+                  )
+              }
+              ok={(password) => {
+                return (
+                  <span>
+                    OpenHIM login successful with user{" "}
+                    <strong>root@openhim.org</strong> and password{" "}
+                    <strong>{password}</strong>
+                  </span>
+                );
+              }}
+              fail={() => <span>Cannot log in to OpenHIM.</span>}
+              instructions={
+                <span>
+                  Make sure your OpenHIM username is{" "}
+                  <strong>root@openhim.org</strong> and password is{" "}
+                  <strong>password</strong> or <strong>wXV8xSW2Ju5X3EPn</strong>
                 </span>
               }
             />
