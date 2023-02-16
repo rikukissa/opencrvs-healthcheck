@@ -1,6 +1,6 @@
 export async function login() {
   const data = await fetch("http://localhost:4040/authenticate", {
-    body: '{"username":"kennedy.mweene","password":"test"}',
+    body: '{"username":"k.mweene","password":"test"}',
     method: "POST",
     headers: {
       "Content-Type": "application/json",
